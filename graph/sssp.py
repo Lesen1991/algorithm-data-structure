@@ -1,50 +1,55 @@
 import copy
 
 INFINITE = 10000
-adjMat = [[INFINITE] * 6 for i in range(6)]
-
-
-def adj_matrix(matrix):
-    matrix[0][1] = 50
-    matrix[0][2] = 10
-    matrix[0][4] = 45
-    matrix[1][2] = 15
-    matrix[1][4] = 10
-    matrix[2][0] = 20
-    matrix[2][3] = 15
-    matrix[3][1] = 20
-    matrix[3][4] = 35
-    matrix[3][5] = 3
-    matrix[4][3] = 30
+graph = {
+    'a': {'a': 0, 'b': -1, 'c': 4, 'd': INFINITE, 'e': INFINITE},
+    'b': {'a': INFINITE, 'b': INFINITE, 'c': 3, 'd': 2, 'e': 2},
+    'c': {'a': INFINITE, 'b': INFINITE, 'c': INFINITE, 'd': INFINITE, 'e': INFINITE},
+    'd': {'a': INFINITE, 'b': 1, 'c': 5, 'd': INFINITE, 'e': INFINITE},
+    'e': {'a': INFINITE, 'b': INFINITE, 'c': INFINITE, 'd': -3, 'e': INFINITE}
+    # 'a': {'a': 0, 'b': 5, 'c': 4, 'd': INFINITE, 'e': INFINITE},
+    # 'b': {'a': INFINITE, 'b': INFINITE, 'c': 3, 'd': 2, 'e': 3},
+    # 'c': {'a': INFINITE, 'b': INFINITE, 'c': INFINITE, 'd': INFINITE, 'e': INFINITE},
+    # 'd': {'a': INFINITE, 'b': 1, 'c': 5, 'd': INFINITE, 'e': INFINITE},
+    # 'e': {'a': INFINITE, 'b': INFINITE, 'c': INFINITE, 'd': 2, 'e': INFINITE}
+}
 
 
 def shortest_path_djs(graph, start):
-    s = graph[start]
-    short_path = {}
-    has_visit = []
-    pass_node = {}
-    # 取出第一个最小值
-    cache = []
-    while len(short_path) < len(s) - 1:
-        for i in range(len(s)):
+    short_path = {start: 0}
+    graph[start][start] = INFINITE
+    while len(short_path) < len(graph):
+        for i in graph[start]:
             if i == start:
                 continue
-            if s[i] != INFINITE and i not in short_path.keys():
-                cache.append(s[i])
-        now_index = s.index(min(cache))
-        node = '-' + str(now_index) if now_index not in pass_node else pass_node[now_index] + '-' + str(now_index)
-        short_path[now_index] = {'node': node, 'len': min(cache)}
-        has_visit.append(now_index)
-        s[now_index] = INFINITE
-        # 刷新 s
-        for i in range(len(graph[start])):
-            if i != start and i not in has_visit and short_path[now_index]['len'] + graph[now_index][i] < s[i]:
-                s[i] = short_path[now_index]['len'] + graph[now_index][i]
-                pass_node[i] = '-' + str(now_index) if now_index not in pass_node else pass_node[now_index] + '-' + str(
-                    now_index)
-        cache = []
+            # 获取最小值
+            min_key = min(graph[start], key=graph[start].get)
+            # 最小值加入结果集
+            short_path[min_key] = graph[start][min_key]
+            # 判断其他点经过最小值点时是否有更小值，如果有，则更新最小值
+            for j in graph[start]:
+                if j == min_key or j == start:
+                    continue
+                if j not in short_path and graph[start][j] > graph[start][min_key] + graph[min_key][j]:
+                    graph[start][j] = graph[start][min_key] + graph[min_key][j]
+            # 将最小值标记为跳过
+            graph[start][min_key] = INFINITE
+    print({i: short_path[i] for i in sorted(short_path.keys())})
 
-    print({k: short_path[k] for k in sorted(short_path)})
+
+def bellman_ford(graph, start):
+    s = {}
+    for v in graph:
+        s[v] = INFINITE
+    s[start] = 0
+    for i in graph:
+        for j in graph[i]:
+            if graph[j][i] != INFINITE and s[i] > s[j] + graph[j][i]:
+                s[i] = s[j] + graph[j][i]
+                for k in graph:
+                    if s[k] > graph[i][k] + s[i]:
+                        s[k] = graph[i][k] + s[i]
+    print(s)
 
 
 def floyd(graph, start):
@@ -54,11 +59,12 @@ def floyd(graph, start):
             for j in range(k_max):
                 if i == k or j == k or i == j:
                     continue
-                if graph[k][j] + graph[i][k] < graph[i][j]:
-                    graph[i][j] = graph[k][j] + graph[i][k]
+                if graph[k][i] > graph[k][j] + graph[j][i]:
+                    graph[k][i] = graph[k][j] + graph[j][i]
     print(graph)
 
 
-adj_matrix(adjMat)
-shortest_path_djs(copy.deepcopy(adjMat), 1)
-floyd(copy.deepcopy(adjMat), 1)
+# shortest_path_djs(copy.deepcopy(graph), 'a')
+# floyd(copy.deepcopy(adjMat), 0)
+bellman_ford(copy.deepcopy(graph), 'a')
+# ({0: 0, 1: -1, 2: 2, 3: 1}, {0: None, 1: 0, 2: 1, 3: 1})

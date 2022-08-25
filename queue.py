@@ -1,4 +1,3 @@
-
 class MyQueue(object):
     def __init__(self):
         self.items = []
